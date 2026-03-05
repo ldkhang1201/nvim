@@ -28,13 +28,7 @@ vim.wo.relativenumber = true
 
 
 
-local plugins = {
-    { "catppuccin/nvim", name = "catppuccin", priority = 1000 }
-}
 
 -- Setup lazy.nvim
-require("lazy").setup(plugins, opts)
-require("catppuccin").setup({
-	flavour = "frappe",
-})
-vim.cmd.colorscheme "catppuccin"
+require("lazy").setup("plugins")
+
