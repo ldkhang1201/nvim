@@ -1,39 +1,54 @@
+-- LSP: mason (installer) + mason-lspconfig (bridge) + native server config.
 return {
-  "neovim/nvim-lspconfig",
-  dependencies = {
-    "hrsh7th/cmp-nvim-lsp",
+  {
+    "williamboman/mason.nvim",
+    config = true,
   },
-  config = function()
-    local lspconfig = require("lspconfig")
-    local capabilities = require("cmp_nvim_lsp").default_capabilities()
+  {
+    "neovim/nvim-lspconfig",
+    dependencies = {
+      "williamboman/mason-lspconfig.nvim",
+      "hrsh7th/cmp-nvim-lsp",
+    },
+    config = function()
+      local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-    -- keymaps when LSP attaches
-    vim.api.nvim_create_autocmd("LspAttach", {
-      callback = function(ev)
-        local opts = { buffer = ev.buf }
-
-        vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-        vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-        vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
-        vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
-        vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
-      end,
-    })
-
-    -- Rust Analyzer setup
-     vim.lsp.config("rust_analyzer", {
-      capabilities = capabilities,
-      settings = {
-        ["rust-analyzer"] = {
-          cargo = {
-            allFeatures = true,
-          },
-          checkOnSave = true,
-          check = {
-            command = "clippy",
+      -- One entry per server. Empty table = defaults.
+      local servers = {
+        rust_analyzer = {
+          settings = {
+            ["rust-analyzer"] = {
+              cargo = { allFeatures = true },
+              check = { command = "clippy" },
+            },
           },
         },
-      },
-    })
- end,
+        pyright = {},
+        gopls = {},
+      }
+
+      require("mason-lspconfig").setup({
+        ensure_installed = vim.tbl_keys(servers),
+      })
+
+      -- Register and enable each server (Neovim 0.11+ native LSP API).
+      for name, opts in pairs(servers) do
+        opts.capabilities = capabilities
+        vim.lsp.config(name, opts)
+        vim.lsp.enable(name)
+      end
+
+      -- Buffer-local keymaps once a server attaches.
+      vim.api.nvim_create_autocmd("LspAttach", {
+        callback = function(ev)
+          local map = function(keys, fn) vim.keymap.set("n", keys, fn, { buffer = ev.buf }) end
+          map("gd", vim.lsp.buf.definition)
+          map("gr", vim.lsp.buf.references)
+          map("K", vim.lsp.buf.hover)
+          map("<leader>rn", vim.lsp.buf.rename)
+          map("<leader>ca", vim.lsp.buf.code_action)
+        end,
+      })
+    end,
+  },
 }
