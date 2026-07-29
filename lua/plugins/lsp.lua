@@ -27,16 +27,17 @@ return {
         gopls = {},
       }
 
-      require("mason-lspconfig").setup({
-        ensure_installed = vim.tbl_keys(servers),
-      })
-
-      -- Register and enable each server (Neovim 0.11+ native LSP API).
+      -- Register configs (Neovim 0.11+ native LSP API). mason-lspconfig's
+      -- automatic_enable then enables only the servers actually installed,
+      -- so a missing binary never triggers a spawn error.
       for name, opts in pairs(servers) do
         opts.capabilities = capabilities
         vim.lsp.config(name, opts)
-        vim.lsp.enable(name)
       end
+
+      require("mason-lspconfig").setup({
+        ensure_installed = vim.tbl_keys(servers),
+      })
 
       -- Buffer-local keymaps once a server attaches.
       vim.api.nvim_create_autocmd("LspAttach", {
