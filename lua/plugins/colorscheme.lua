@@ -12,6 +12,8 @@ return {
         integrations = {
           treesitter = true,
           telescope = true,
+          gitsigns = true,
+          treesitter_context = true,
           native_lsp = {
             enabled = true,
           },
